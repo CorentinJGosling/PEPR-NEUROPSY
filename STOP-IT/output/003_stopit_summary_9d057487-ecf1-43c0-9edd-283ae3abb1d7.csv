@@ -1,0 +1,2 @@
+visitId,study_id,age,gender,successOnStopTrialsRate,accuracyOnGoTrials,stopSignalAverageDelay,averageSSRT,averageReactionTimeOnGoTrials
+9d057487-ecf1-43c0-9edd-283ae3abb1d7,PlanDefinition/frenchminds-clinical-trial,45,M,3.90625,26.953125,62.890625,151.8515625,399.1171875
