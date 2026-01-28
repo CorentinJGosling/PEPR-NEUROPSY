@@ -32,6 +32,10 @@ DESCRIPTION: This is the jsPsych version of the stop-signal task
   <!-- custom plugin for the main stop-signal trial based on the image-keyboard-response plugin -->
   <script src="js/jspsych-detect-held-down-keys.js"></script>
   <!-- custom plugin for detecting if a key is being held down -->
+  <script src="js/calculate-stop-it-scores.js"></script>
+  <!-- calcul des indices STOP-IT conforme au script R -->
+  <script src="js/export-stop-it-csv.js"></script>
+  <!-- export des données STOP-IT en fichiers CSV locaux -->
   <script src="configuration/experiment_variables.js"></script> <!-- parameters to configure the experiment -->
   <script src="configuration/text_variables.js"></script>
   <!-- holds all the text variables for easy modification/translation -->
@@ -508,83 +512,32 @@ DESCRIPTION: This is the jsPsych version of the stop-signal task
           });
           return newRow;
         });
+        // Utilise la fonction calculateStopItScores() définie dans js/calculate-stop-it-scores.js
+        let scores = calculateStopItScores(d);
 
-        // Essais pris en compte dans les calculs
-        var trialsTakenIntoAccountInCalculus = d.filter(row => row.block_i > 0); //! Faut-il compter ou ignorer les données du bloc n°0 dans les calculs finaux ?
-        // Nombre d'essais Stop réussis 
-        var successOnStopTrialsCount = 0;
-        // Nombre d'essais Go réussis
-        var successOnGoTrialsCount = 0;
-        // Délais des signaux Stop (SSD)
-        let stopSignalDelays = [];
-        // SSRT (Vitesse d'inhibition)
-        let ssrtArray = [];
-        // Temps de réaction (essais Go)
-        let reactionTimesOnGoTrials = [];
-        trialsTakenIntoAccountInCalculus.forEach(row => {
-            if (row.signal === "yes" && row.correct === true) {
-              successOnStopTrialsCount++;
-            }
-            if (row.signal === "no" && row.correct === true) {
-              successOnGoTrialsCount++;
-            }
-            if (row.SSD) {
-              stopSignalDelays.push(row.SSD)
-            }
-            if (row.signal === "yes" && row.rt) {
-              ssrtArray.push(row.rt)
-            }
-            if (row.signal === "no" && row.rt) {
-              reactionTimesOnGoTrials.push(row.rt)
-            }
-        });
-        let scores = {
-          // Taux de réussite à l'inhibition (Stop)
-          successOnStopTrialsRate: (successOnStopTrialsCount / trialsTakenIntoAccountInCalculus.length) * 100,
-          // Précision sur les essais Go
-          accuracyOnGoTrials: (successOnGoTrialsCount / trialsTakenIntoAccountInCalculus.length) * 100,
-          // Délai moyen du Signal Stop (SSD)
-          stopSignalAverageDelay: stopSignalDelays.reduce((acc, currentVal) => acc + currentVal, 0) / trialsTakenIntoAccountInCalculus.length,
-          // SSRT (Vitesse d'inhibition)
-          averageSSRT: ssrtArray.reduce((acc, currentVal) => acc + currentVal, 0) / trialsTakenIntoAccountInCalculus.length,
-          // Temps de Réaction Moyen (Go)
-          averageReactionTimeOnGoTrials: reactionTimesOnGoTrials.reduce((acc, currentVal) => acc + currentVal, 0) / trialsTakenIntoAccountInCalculus.length,
-        }
-        
-
-
+        // ========== EXPORT API ==========
         const payload = {
           visitId: visitId,
           study_id: studyId,
           age: age,
           gender: gender,
           Responses: cleanedResponses,
-          ...scores,
+          ...scores, // Inclut tous les 19 indices: presp, ssd, ssrt, usRT, goRT_all, goRT_correct, goRT_sd, 
+                     // go_omission, go_error, go_premature, Nstop, Ngo, goRT_cv, go_lapses, 
+                     // Slope_RT, Slope_SE, goRT_median, go_perseverations, go_outliers
         };
-
-        // Envoi des données à l'API
+        
         await postData('/responses/stop-it', payload)
+        // ========== FIN EXPORT API ==========
+
+        // ========== EXPORT CSV LOCAL (POUR LES TESTS) ==========
+        exportStopItDataToCSV(d, scores);
+        // ========== FIN EXPORT CSV LOCAL ==========
 
       } catch (err) {
         console.error("Erreur lors du traitement des données de test STOP-IT en fin de test :", err);
         throw err;
       }
-
-      /*new_arr = [] // we will fill this array with the ordered data
-      function myFunction(item) { // this is function is called in the arr.forEach call below
-        new_obj[item] = obj[item]
-        return new_obj
-      }
-      // do it for the whole data array
-      for (i = 0; i < d.length; i++) {
-        obj = d[i]; // get one row of data
-        new_obj = {};
-        arr.forEach(myFunction) // for each element in the array run my function
-        selected_data.values()[i] = new_obj; // insert the ordered values back in the jsPsych.data object
-      }
-      if (!online) {
-        selected_data.localSave('csv', 'stopit_data_' + subjID + '.csv');
-      }*/
     },
     on_finish: function () {
       //window.close(); // close the browser window after the experiment is finished
@@ -726,9 +679,9 @@ DESCRIPTION: This is the jsPsych version of the stop-signal task
       if (interaction.includes("fullscreen")) {
         // some unhandy coding to circumvent a bug in jspsych that logs fullscreenexit when actually entering
         if (fullscr_ON == 'no') { 
-          fullscr_ON = 'yes'; return fullscr_ON 
+          fullscr_ON = 'yes'; return fullscr_ON; 
         } else if (fullscr_ON == 'yes') { 
-          fullscr_ON = 'no'; return fullscr_ON ``
+          fullscr_ON = 'no'; return fullscr_ON;
         }
       } else if (interaction == 'blur' || interaction == 'focus') {
         focus = interaction;
