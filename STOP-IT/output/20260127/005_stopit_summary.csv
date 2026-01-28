@@ -1,0 +1,2 @@
+presp,ssd,ssrt,usRT,goRT_all,goRT_correct,goRT_sd,go_omission,go_error,go_premature,Nstop,Ngo,goRT_cv,go_lapses,Slope_RT,Slope_SE,goRT_median,go_perseverations,go_outliers
+0.78125,64,1153,679,676,683,324,0.203125,0.5686274509803921,0,64,192,50.04,25.76,0.37,0.57,683,13,0
